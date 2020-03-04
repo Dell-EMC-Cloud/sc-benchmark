@@ -48,11 +48,12 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	hostname += fmt.Sprintf("_%08d",rand.Intn(100000000))
 
+	path := fmt.Sprintf("%s/%s", dFlag, hostname)
+	if _, err = os.Stat(path); os.IsNotExist(err) {
+		err = os.Mkdir(path, 0755)
+	}
 
-        go func() {
-                wg.Wait()
-                close(progress)
-        }()
+	check(err)
 
 
 	fmt.Printf("Writing %d files with filesizes between %.1f MB and %.1f MB...\n\n", nFlag, float64(size)/1048576, float64(size)/1048576 * float64(mFlag))
@@ -61,6 +62,11 @@ func main() {
 		wg.Add(1)
 		go spraydna(x, wg, sema, &out, dFlag, progress, mFlag, hostname)
 	}
+
+        go func() {
+                wg.Wait()
+                close(progress)
+        }()
 
         // If the '-v' flag was provided, periodically print the progress stats
         var tick <-chan time.Time
@@ -105,6 +111,7 @@ func genstring(size int) []byte {
 
 func check(e error) {
 	if e != nil {
+		fmt.Printf("Error: %v\n", e)
 		panic(e)
 	}
 }
@@ -114,10 +121,6 @@ func spraydna(count int, wg *sync.WaitGroup, sema chan struct{}, out *[]byte, di
 	sema <- struct{}{}        // acquire token
 	defer func() { <-sema }() // release token
 	path := fmt.Sprintf("%s/%s", dir, hostname)
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.Mkdir(path, 0755)
-	}
 
 	multiple := rand.Intn(mFlag) + 1
 	filename := fmt.Sprintf("%s/%s-%d-%d.txt", path, hostname, count, multiple)
