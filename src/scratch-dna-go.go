@@ -53,9 +53,6 @@ func main() {
 		err = os.Mkdir(path, 0755)
 	}
 
-	check(err)
-
-
 	fmt.Printf("Writing %d files with filesizes between %.1f MB and %.1f MB...\n\n", nFlag, float64(size)/1048576, float64(size)/1048576 * float64(mFlag))
 
 	for x := 1; x <= nFlag; x++ {
